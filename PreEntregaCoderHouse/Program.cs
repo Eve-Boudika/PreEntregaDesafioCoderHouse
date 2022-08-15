@@ -12,7 +12,8 @@ namespace PreEntregaCoderHouse
             UsuarioRepository usuarioRepository = new UsuarioRepository();
 
             UsuarioService usuarioService = new UsuarioService();
-            Console.WriteLine(usuarioService.ValidarSesion("tcasazza", "SoyTobiasCasazza"));
+            Usuario usuario = usuarioService.ValidarSesion("tcasazza", "SoyTobiasCasazza");
+            Console.WriteLine(usuario.Id);
 
 
         }

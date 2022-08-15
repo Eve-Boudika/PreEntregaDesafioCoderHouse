@@ -2,64 +2,53 @@
 using PreEntregaCoderHouse.Repository;
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace PreEntregaCoderHouse.Services
 {
-    internal class UsuarioService
+    internal class UsuarioService : DataBase
     {
-        public string ValidarSesion(string nombreUsuario, string contraseña)
+        public Usuario ValidarSesion(string userName, string password)
         {
-            UsuarioRepository _usuarioRepository = new UsuarioRepository();
+            string cmdText = "SELECT * FROM Usuario" +
+                " WHERE NombreUsuario = @NombreUsuario AND Contraseña = @Contraseña;";
 
-            List<Usuario> Usuarios = _usuarioRepository.GetUsuarios();
+            Usuario _usuario = new Usuario();
 
-            bool usuarioValido = false;
-            bool contraseñaValida = false;
-
-            usuarioValido = ValidarUsuario(Usuarios, nombreUsuario.ToUpper());
-
-            if (usuarioValido)
+            using (SqlConnection sqlConnection = new SqlConnection(ConnectionString))
             {
-
-                contraseñaValida = ValidarContraseña(Usuarios, contraseña.ToUpper());
-
-            }
-
-            if (usuarioValido && contraseñaValida)
-            {
-                return "ingreso Exitoso";
-            }
-            else
-            {
-                return "usuario o contraseña invalida";
-            }
-        }
-
-        private bool ValidarUsuario(List<Usuario> Usuarios, string UpperUserName)
-        {
-            foreach (var item in Usuarios)
-            {
-                if (item.NombreUsuario.ToUpper().Equals(UpperUserName))
+                using (SqlCommand sqlCommand = new SqlCommand(cmdText, sqlConnection))
                 {
-                    return true;
+                    sqlCommand.Parameters.Add(new SqlParameter("@NombreUsuario", SqlDbType.VarChar)).Value = userName;
+                    sqlCommand.Parameters.Add(new SqlParameter("@Contraseña", SqlDbType.VarChar)).Value = password;
+
+                    sqlConnection.Open();
+                    using (SqlDataReader dataReader = sqlCommand.ExecuteReader())
+                    {
+                        if (dataReader.HasRows)
+                        {
+                            while (dataReader.Read())
+                            {
+                                Usuario usuario = new Usuario();
+                                usuario.Id = Convert.ToInt64(dataReader["Id"]);
+                                usuario.Nombre = dataReader["Nombre"].ToString();
+                                usuario.Apellido = dataReader["Apellido"].ToString();
+                                usuario.NombreUsuario = dataReader["NombreUsuario"].ToString();
+                                usuario.Contraseña = dataReader["Contraseña"].ToString();
+                                usuario.Mail = dataReader["Mail"].ToString();
+
+                                _usuario = usuario;
+                            }
+                        }
+                    }
                 }
             }
-            return false;
-        }
 
-        private bool ValidarContraseña(List<Usuario> Usuarios, string UpperPassword)
-        {
-            foreach (var item in Usuarios)
-            {
-                if (item.Contraseña.ToUpper().Equals(UpperPassword))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return _usuario;
         }
 
     }
